@@ -27,19 +27,29 @@ class CPU
             FLAG_NEGATIVE = 0x80
         };
 
+        void load(std::vector<uint8_t> &program);
+        void run();
+
     private:
         void lda(uint8_t byte);
+        void tax();
+        void inx();
+        void brk();
 
         void setFlag(Flag flag);
         void unsetFlag(Flag flag);
 
+        uint8_t mem_read(uint16_t addr);
+        void mem_write(uint16_t addr, uint8_t data);
+
     private:
-        uint16_t m_pc;
-        uint8_t m_sp;
-        uint8_t m_acc;
-        uint8_t m_regX;
-        uint8_t m_regY;
-        uint8_t m_procStatus;
+        uint16_t m_pc; // Program Counter
+        uint8_t m_sp; // Stack Pointer
+        uint8_t m_acc; // Accumulator
+        uint8_t m_regX; // Register X
+        uint8_t m_regY; // Register Y
+        uint8_t m_procStatus; // Processor Status
+        uint8_t m_mem[0x10000]; // Memory
 };
 
 #endif /* !CPU_H_ */
