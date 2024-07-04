@@ -87,7 +87,7 @@ class CPU
         };
 
         // Instructions
-        void ADC();
+        void ADC(AddressingMode mode);
         // void AND();
         // void ASL();
         // void BCC();
@@ -130,19 +130,19 @@ class CPU
         // void ROR();
         // void RTI();
         // void RTS();
-        // void SBC();
-        // void SEC();
-        // void SED();
-        // void SEI();
-        // void STA();
-        // void STX();
-        // void STY();
+        void SBC(AddressingMode mode);
+        void SEC(AddressingMode mode);
+        void SED(AddressingMode mode);
+        void SEI(AddressingMode mode);
+        void STA(AddressingMode mode);
+        void STX(AddressingMode mode);
+        void STY(AddressingMode mode);
         void TAX(AddressingMode mode);
-        // void TAY();
-        // void TSX();
-        // void TXA();
-        // void TXS();
-        // void TYA();
+        void TAY(AddressingMode mode);
+        void TSX(AddressingMode mode);
+        void TXA(AddressingMode mode);
+        void TXS(AddressingMode mode);
+        void TYA(AddressingMode mode);
 
     private:
         uint16_t m_pc; // Program Counter
