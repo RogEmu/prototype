@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#define PAGE_CROSS(x, y) ((x & 0xFF00) != (y & 0xFF00))
+#define PAGE_CROSS(x, y) (((x) & 0xFF00) != ((y) & 0xFF00))
 
 CPU::CPU() :
     m_pc(0),
