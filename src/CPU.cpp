@@ -22,6 +22,18 @@ CPU::~CPU()
 {
 }
 
+void CPU::ADC()
+{
+    uint8_t data = memoryRead(m_pc++);
+    uint16_t result = m_acc + data + (m_procStatus & Flag::CARRY);
+
+    setFlag(Flag::CARRY, result > 0xFF);
+    setFlag(Flag::ZERO, (result & 0xFF) == 0);
+    setFlag(Flag::OVERFLOW, (~(m_acc ^ data) & (m_acc ^ result)) & 0x0080);
+    setFlag(Flag::NEGATIVE, (result & 0x80));
+    m_acc = result & 0x00FF;
+}
+
 void CPU::LDA()
 {
     m_acc = memoryRead(m_pc++);

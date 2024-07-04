@@ -90,7 +90,7 @@ class CPU
         uint16_t IndexedIndirectMode();
 
         // Instructions
-        // void ADC();
+        void ADC();
         // void AND();
         // void ASL();
         // void BCC();
