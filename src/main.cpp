@@ -6,15 +6,26 @@
 */
 
 #include "CPU.h"
+#include "Bus.h"
 
-int main()
+#include <iostream>
+
+int main(int ac, char**av)
 {
-    CPU cpu;
-    std::vector<uint8_t> memory = {0x20, 0x09, 0x06, 0x20, 0x0c, 0x06, 0x20, 0x12, 0x06, 0xa2, 0x00, 0x60, 0xe8, 0xe0, 0x05, 0xd0, 0xfb, 0x60, 0x00};
+    if (ac != 2)
+    {
+        std::cout << "Input ROM file" << std::endl;
+        return -1;
+    }
 
-    cpu.loadMemory(memory);
+    CPU cpu;
+    Bus bus;
+
+    bus.loadFromFile(std::string(av[1]));
+    bus.connectCPU(&cpu);
+    cpu.connectBus(&bus);
     cpu.memoryWrite(0xFFFC, 0x00);
-    cpu.memoryWrite(0xFFFD, 0x06);
+    cpu.memoryWrite(0xFFFD, 0xC0);
     cpu.reset();
     cpu.run();
     return 0;

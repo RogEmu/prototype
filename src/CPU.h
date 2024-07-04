@@ -13,6 +13,8 @@
 #include <string>
 #include <map>
 
+class Bus;
+
 enum Flag
 {
     CARRY = 0x1,
@@ -47,14 +49,17 @@ class CPU
         CPU();
         ~CPU();
 
-        void loadMemory(const std::vector<uint8_t> &program);
         void run();
         void reset();
+        void irq();
+        void nmi();
 
         uint8_t memoryRead(uint16_t addr);
         void memoryWrite(uint16_t addr, uint8_t data);
 
         void tick();
+
+        void connectBus(Bus *bus);
 
     private:
         void setFlag(Flag flag, bool on);
@@ -147,6 +152,8 @@ class CPU
         void TXS(AddressingMode mode);
         void TYA(AddressingMode mode);
 
+        void logInstruction(uint8_t opcode, AddressingMode mode);
+        void logDissassembly(uint8_t opcode, AddressingMode mode);
     private:
         uint16_t m_pc; // Program Counter
         uint8_t m_sp; // Stack Pointer
@@ -155,12 +162,12 @@ class CPU
         uint8_t m_regY; // Register Y
         uint8_t m_procStatus; // Processor Status
 
-        uint8_t m_mem[0x10000]; // Memory
-
         std::map<uint8_t, Instruction> m_opcodeLookup;
 
         uint8_t m_currentCycles;
         uint64_t m_totalCycles;
+
+        Bus* m_bus;
 };
 
 #endif /* !CPU_H_ */

@@ -8,6 +8,9 @@
 
 #include <iostream>
 #include <bitset>
+#include <iomanip>
+
+#include "Bus.h"
 
 #define PAGE_CROSS(x, y) (((x) & 0xFF00) != ((y) & 0xFF00))
 
@@ -552,7 +555,6 @@ void CPU::LSR(AddressingMode mode)
 void CPU::NOP(AddressingMode mode)
 {
     (void)mode;
-    m_pc++;
 }
 
 void CPU::ORA(AddressingMode mode)
@@ -735,19 +737,78 @@ void CPU::TYA(AddressingMode mode)
 
 uint8_t CPU::memoryRead(uint16_t addr)
 {
-    return m_mem[addr];
+    return m_bus->cpuRead(addr);
 }
 
 uint16_t CPU::memoryReadAddress(uint16_t addr)
 {
-    uint8_t highAddr = m_mem[addr + 1];
-    uint8_t lowAddr = m_mem[addr];
+    uint8_t highAddr = memoryRead(addr + 1);
+    uint8_t lowAddr = memoryRead(addr);
     return (highAddr << 8) | lowAddr;
 }
 
 void CPU::memoryWrite(uint16_t addr, uint8_t data)
 {
-    m_mem[addr] = data;
+    m_bus->cpuWrite(addr, data);
+}
+
+void CPU::logInstruction(uint8_t opcode, AddressingMode mode)
+{
+    printf("%02X ", opcode);
+    switch (mode)
+    {
+        case AddressingMode::Implicit:
+            printf("       ");
+            break;
+        case AddressingMode::Absolute:
+        case AddressingMode::AbsoluteX:
+        case AddressingMode::AbsoluteY:
+            printf("%02X %02X  ", memoryRead(m_pc), memoryRead(m_pc + 1));
+            break;
+        case AddressingMode::Immediate:
+        case AddressingMode::ZeroPage:
+        case AddressingMode::ZeroPageX:
+        case AddressingMode::ZeroPageY:
+        case AddressingMode::IndirectIndexed:
+        case AddressingMode::IndexedIndirect:
+        case AddressingMode::Relative:
+            printf("%02X     ", memoryRead(m_pc));
+            break;
+        default:
+            break;
+    }
+}
+
+void CPU::logDissassembly(uint8_t opcode, AddressingMode mode)
+{
+    switch (mode)
+    {
+        case AddressingMode::Implicit:
+            printf("                             ");
+            break;
+        case AddressingMode::Immediate:
+            printf(" #$%02X                        ", memoryRead(m_pc));
+            break;
+        case AddressingMode::Absolute:
+        case AddressingMode::AbsoluteX:
+        case AddressingMode::AbsoluteY:
+            printf(" $%04X                       ", (memoryRead(m_pc) | ((uint16_t)memoryRead(m_pc + 1)) << 8));
+            break;
+        case AddressingMode::Relative:
+            printf(" $%04X                       ", memoryReadAddress(m_pc + (int8_t)memoryRead(m_pc) - 1));
+            break;
+        case AddressingMode::ZeroPage:
+        case AddressingMode::ZeroPageX:
+        case AddressingMode::ZeroPageY:
+            printf(" $%02X = %02X                    ", memoryRead(m_pc), memoryRead(memoryRead(m_pc)));
+            break;
+        case AddressingMode::IndirectIndexed:
+        case AddressingMode::IndexedIndirect:
+            printf(" $%02X                         ", memoryRead(m_pc));
+            break;
+        default:
+            break;
+    }
 }
 
 void CPU::tick()
@@ -756,29 +817,28 @@ void CPU::tick()
     {
         uint8_t opcode = fetchByte();
 
-        m_procStatus |= Flag::UNUSED;
+        m_procStatus |= Flag::UNUSED | Flag::INT_DISABLE;
         if (!m_opcodeLookup.contains(opcode))
         {
             printf("Illegal opcode (%02x)\n", opcode);
             return;
         }
-
         auto instruction = m_opcodeLookup[opcode];
         m_currentCycles = instruction.cycles;
+        printf("%04X  ", m_pc - 1);
+        logInstruction(opcode, instruction.addrMode);
+        printf("%s", instruction.name.c_str());
+        logDissassembly(opcode, instruction.addrMode);
+        printf("A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", m_acc, m_regX, m_regY, m_procStatus, m_sp);
         (this->*instruction.operation)(instruction.addrMode);
-
-        printf("CPU State:\n");
-        printf("    Program Counter: %04X, current instruction: %02X:%s:%d\n", m_pc, opcode, instruction.name.c_str(), instruction.cycles);
-        printf("    Stack Pointer: %02X\n", m_sp);
-        printf("    Accumulator: %02X\n", m_acc);
-        printf("    Register X: %02X\n", m_regX);
-        printf("    Register Y: %02X\n", m_regY);
-        fflush(stdout);
-        std::cout << "    Status Register: " << std::bitset<8>(m_procStatus) << std::endl;
-        std::cout << "                     NV1BDIZC\n" << std::endl;
     }
     m_currentCycles--;
     m_totalCycles++;
+}
+
+void CPU::connectBus(Bus *bus)
+{
+    m_bus = bus;
 }
 
 uint8_t CPU::fetchByte()
@@ -917,23 +977,19 @@ void CPU::reset()
     m_acc = 0;
     m_regX = 0;
     m_regY = 0;
-    m_sp = 0xFF;
+    m_sp = 0xFD;
     m_procStatus = 0;
     m_currentCycles = 7;
     m_totalCycles = 0;
     m_pc = memoryReadAddress(0xFFFC);
 }
 
-void CPU::loadMemory(const std::vector<uint8_t> &program)
+void CPU::irq()
 {
-    size_t maxSize = 0xFFFF - 0x0600;
+}
 
-    if (program.size() > maxSize)
-    {
-        std::cout << "Program memory is too large" << std::endl;
-        return;
-    }
-    std::copy(program.begin(), program.end(), m_mem + 0x0600);
+void CPU::nmi()
+{
 }
 
 void CPU::run()
