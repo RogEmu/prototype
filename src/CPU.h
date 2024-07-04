@@ -88,7 +88,7 @@ class CPU
 
         // Instructions
         // void ADC();
-        // void AND();
+        void AND(AddressingMode mode);
         // void ASL();
         // void BCC();
         // void BCS();
@@ -155,6 +155,8 @@ class CPU
         uint8_t m_mem[0x10000]; // Memory
 
         std::map<uint8_t, Instruction> m_opcodeLookup;
+
+        uint8_t m_currentCycles;
 };
 
 #endif /* !CPU_H_ */

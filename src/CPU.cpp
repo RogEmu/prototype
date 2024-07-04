@@ -37,7 +37,12 @@ CPU::~CPU()
 
 void CPU::LDA(AddressingMode mode)
 {
-    m_acc = memoryRead(addressFromMode(mode));
+    uint16_t tmpPc = m_pc;
+    uint16_t addr = addressFromMode(mode);
+
+    if ((tmpPc & 0xFF) != (addr & 0xFF))
+        m_currentCycles++;
+    m_acc = memoryRead(addr);
     setFlag(Flag::ZERO, m_acc == 0);
     setFlag(Flag::NEGATIVE, (m_acc >> 7));
 }
@@ -62,6 +67,12 @@ void CPU::INX(AddressingMode mode)
     m_regX++;
     setFlag(Flag::ZERO, m_regX == 0);
     setFlag(Flag::NEGATIVE, (m_regX >> 7));
+}
+
+void CPU::AND(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+
 }
 
 void CPU::BRK(AddressingMode mode)
@@ -250,7 +261,7 @@ void CPU::run()
         }
 
         auto instruction = m_opcodeLookup[opcode];
-
+        m_currentCycles = instruction.cycles;
         (this->*instruction.operation)(instruction.addrMode);
 
         printf("CPU State:\n");
