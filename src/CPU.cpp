@@ -7,6 +7,7 @@
 #include "CPU.h"
 
 #include <iostream>
+#include <bitset>
 
 #define PAGE_CROSS(x, y) (((x) & 0xFF00) != ((y) & 0xFF00))
 
@@ -16,7 +17,9 @@ CPU::CPU() :
     m_acc(0),
     m_regX(0),
     m_regY(0),
-    m_procStatus(0)
+    m_procStatus(Flag::UNUSED),
+    m_currentCycles(0),
+    m_totalCycles(0)
 {
     m_opcodeLookup[0x69] = (Instruction){"ADC", AddressingMode::Immediate, &CPU::ADC, 2};
     m_opcodeLookup[0x65] = (Instruction){"ADC", AddressingMode::ZeroPage, &CPU::ADC, 3};
@@ -44,9 +47,9 @@ CPU::CPU() :
 
     m_opcodeLookup[0x90] = (Instruction){"BCC", AddressingMode::Relative, &CPU::BCC, 2};
     m_opcodeLookup[0xB0] = (Instruction){"BCS", AddressingMode::Relative, &CPU::BCS, 2};
-    m_opcodeLookup[0xF0] = (Instruction){"BEQ", AddressingMode::Relative, &CPU::BCS, 2};
-    m_opcodeLookup[0x30] = (Instruction){"BMI", AddressingMode::Relative, &CPU::BCS, 2};
-    m_opcodeLookup[0xD0] = (Instruction){"BNE", AddressingMode::Relative, &CPU::BCS, 2};
+    m_opcodeLookup[0xF0] = (Instruction){"BEQ", AddressingMode::Relative, &CPU::BEQ, 2};
+    m_opcodeLookup[0x30] = (Instruction){"BMI", AddressingMode::Relative, &CPU::BMI, 2};
+    m_opcodeLookup[0xD0] = (Instruction){"BNE", AddressingMode::Relative, &CPU::BNE, 2};
     m_opcodeLookup[0x10] = (Instruction){"BPL", AddressingMode::Relative, &CPU::BPL, 2};
     m_opcodeLookup[0x50] = (Instruction){"BVC", AddressingMode::Relative, &CPU::BVC, 2};
     m_opcodeLookup[0x70] = (Instruction){"BVS", AddressingMode::Relative, &CPU::BVS, 2};
@@ -76,7 +79,7 @@ CPU::CPU() :
 
     m_opcodeLookup[0xC0] = (Instruction){"CPY", AddressingMode::Immediate, &CPU::CPY, 2};
     m_opcodeLookup[0xC4] = (Instruction){"CPY", AddressingMode::ZeroPage, &CPU::CPY, 3};
-    m_opcodeLookup[0xCC] = (Instruction){"CPY", AddressingMode::Absolute, &CPU::CPX, 4};
+    m_opcodeLookup[0xCC] = (Instruction){"CPY", AddressingMode::Absolute, &CPU::CPY, 4};
 
     m_opcodeLookup[0xC6] = (Instruction){"DEC", AddressingMode::ZeroPage, &CPU::DEC, 5};
     m_opcodeLookup[0xD6] = (Instruction){"DEC", AddressingMode::ZeroPageX, &CPU::DEC, 6};
@@ -101,7 +104,7 @@ CPU::CPU() :
     m_opcodeLookup[0xFE] = (Instruction){"INC", AddressingMode::AbsoluteX, &CPU::INC, 7};
 
     m_opcodeLookup[0xE8] = (Instruction){"INX", AddressingMode::Implicit, &CPU::INX, 2};
-    m_opcodeLookup[0xC8] = (Instruction){"INY", AddressingMode::Implicit, &CPU::INX, 2};
+    m_opcodeLookup[0xC8] = (Instruction){"INY", AddressingMode::Implicit, &CPU::INY, 2};
 
     m_opcodeLookup[0x4C] = (Instruction){"JMP", AddressingMode::Absolute, &CPU::JMP, 3};
     m_opcodeLookup[0x6C] = (Instruction){"JMP", AddressingMode::Indirect, &CPU::JMP, 5};
@@ -116,7 +119,6 @@ CPU::CPU() :
     m_opcodeLookup[0xB1] = (Instruction){"LDA", AddressingMode::IndirectIndexed, &CPU::LDA, 5};
 
     m_opcodeLookup[0xEA] = (Instruction){"NOP", AddressingMode::Implicit, &CPU::NOP, 2};
-    m_opcodeLookup[0x00] = (Instruction){"BRK", AddressingMode::Implicit, &CPU::BRK, 7};
 
     m_opcodeLookup[0x20] = (Instruction){"JSR", AddressingMode::Absolute, &CPU::JSR, 6};
 
@@ -234,14 +236,12 @@ void CPU::AND(AddressingMode mode)
 void CPU::ASL(AddressingMode mode)
 {
     uint16_t addr = addressFromMode(mode);
-    uint8_t byte = 0;
+    uint8_t byte = (mode == AddressingMode::Implicit) ? m_acc : memoryRead(addr);
 
-    if (mode == AddressingMode::Implicit)
-        byte = m_acc;
     setFlag(Flag::CARRY, byte & 0x80);
+    byte <<= 1;
     setFlag(Flag::ZERO, byte == 0);
     setFlag(Flag::NEGATIVE, byte & 0x80);
-    byte <<= 1;
     if (mode == AddressingMode::Implicit)
         m_acc = byte;
     else
@@ -399,7 +399,7 @@ void CPU::CMP(AddressingMode mode)
     uint8_t byte = memoryRead(addr);
 
     uint8_t res = m_acc - byte;
-    setFlag(Flag::CARRY, res >= byte);
+    setFlag(Flag::CARRY, m_acc >= byte);
     setFlag(Flag::ZERO, m_acc == byte);
     setFlag(Flag::NEGATIVE, res & 0x80);
 }
@@ -410,8 +410,8 @@ void CPU::CPX(AddressingMode mode)
     uint8_t byte = memoryRead(addr);
 
     uint8_t res = m_regX - byte;
-    setFlag(Flag::CARRY, res >= byte);
-    setFlag(Flag::ZERO, m_acc == byte);
+    setFlag(Flag::CARRY, m_regX >= byte);
+    setFlag(Flag::ZERO, m_regX == byte);
     setFlag(Flag::NEGATIVE, res & 0x80);
 }
 
@@ -421,8 +421,8 @@ void CPU::CPY(AddressingMode mode)
     uint8_t byte = memoryRead(addr);
 
     uint8_t res = m_regY - byte;
-    setFlag(Flag::CARRY, res >= byte);
-    setFlag(Flag::ZERO, m_acc == byte);
+    setFlag(Flag::CARRY, m_regY >= byte);
+    setFlag(Flag::ZERO, m_regY == byte);
     setFlag(Flag::NEGATIVE, res & 0x80);
 }
 
@@ -536,12 +536,13 @@ void CPU::LDY(AddressingMode mode)
 void CPU::LSR(AddressingMode mode)
 {
     uint16_t addr = addressFromMode(mode);
-    uint8_t byte = memoryRead(addr);
-    uint8_t result = byte >> 1;
+    uint8_t byte = (mode == AddressingMode::Implicit) ? m_acc : memoryRead(addr);
 
     setFlag(Flag::CARRY, byte & 0x01);
+    uint8_t result = byte >> 1;
     setFlag(Flag::ZERO, (result & 0x00FF) == 0x0000);
     setFlag(Flag::NEGATIVE, result & 0x80);
+
     if (mode == AddressingMode::Implicit)
         m_acc = result & 0x00FF;
     else
@@ -593,31 +594,35 @@ void CPU::PLP(AddressingMode mode)
 void CPU::ROL(AddressingMode mode)
 {
     uint16_t addr = addressFromMode(mode);
+    uint8_t byte = (mode == AddressingMode::Implicit) ? m_acc : memoryRead(addr);
     uint8_t carry = isFLagSet(Flag::CARRY);
-    uint16_t result = (uint16_t)memoryRead(addr) << 1 | carry;
 
-    setFlag(Flag::CARRY, memoryRead(addr) & 0xFF00);
-    setFlag(Flag::ZERO, (result & 0x00FF) == 0x0000);
-    setFlag(Flag::NEGATIVE, result & 0x0080);
+    setFlag(Flag::CARRY, byte & 0x80);
+    byte = (byte << 1) | carry;
+    setFlag(Flag::ZERO, byte == 0);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
+
     if (mode == AddressingMode::Implicit)
-        m_acc = result & 0x00FF;
+        m_acc = byte;
     else
-        memoryWrite(addr, result & 0x00FF);
+        memoryWrite(addr, byte);
 }
 
 void CPU::ROR(AddressingMode mode)
 {
     uint16_t addr = addressFromMode(mode);
+    uint8_t byte = (mode == AddressingMode::Implicit) ? m_acc : memoryRead(addr);
     uint8_t carry = isFLagSet(Flag::CARRY);
-    uint16_t result = (uint16_t)carry << 7 | memoryRead(addr) >> 1;
 
-    setFlag(Flag::CARRY, memoryRead(addr) & 0x01);
-    setFlag(Flag::ZERO, (result & 0x00FF) == 0x0000);
-    setFlag(Flag::NEGATIVE, result & 0x0080);
+    setFlag(Flag::CARRY, byte & 0x01);
+    byte = (byte >> 1) | (carry << 7);
+    setFlag(Flag::ZERO, byte == 0);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
+
     if (mode == AddressingMode::Implicit)
-        m_acc = result & 0x00FF;
+        m_acc = byte;
     else
-        memoryWrite(addr, result & 0x00FF);
+        memoryWrite(addr, byte);
 }
 
 void CPU::RTI(AddressingMode mode)
@@ -625,16 +630,14 @@ void CPU::RTI(AddressingMode mode)
     (void)mode;
     m_procStatus = stackPull();
     m_pc = stackPull();
-    m_pc |= stackPull() << 8;
+    m_pc |= ((uint16_t)stackPull()) << 8;
 }
 
 void CPU::RTS(AddressingMode mode)
 {
     (void)mode;
-    m_sp++;
-    m_pc = (uint16_t)memoryRead(0x0100 | m_sp);
-    m_sp++;
-    m_pc |= (uint16_t)memoryRead(0x0100 | m_sp) << 8;
+    m_pc = (uint16_t)stackPull();
+    m_pc |= (uint16_t)stackPull() << 8;
     m_pc++;
 }
 
@@ -646,8 +649,8 @@ void CPU::SBC(AddressingMode mode)
 
     setFlag(Flag::CARRY, result & 0xFF00);
     setFlag(Flag::ZERO, (result & 0x00FF) == 0);
-    setFlag(Flag::OVERFLOW, ((result ^ m_acc)) & (result ^ data) & 0x0080);
-    setFlag(Flag::NEGATIVE, (result & 0x0080));
+    setFlag(Flag::OVERFLOW, (~(m_acc ^ data) & (m_acc ^ result)) & 0x80);
+    setFlag(Flag::NEGATIVE, result & 0x80);
     m_acc = result & 0x00FF;
 }
 
@@ -747,6 +750,37 @@ void CPU::memoryWrite(uint16_t addr, uint8_t data)
     m_mem[addr] = data;
 }
 
+void CPU::tick()
+{
+    if (m_currentCycles <= 0)
+    {
+        uint8_t opcode = fetchByte();
+
+        m_procStatus |= Flag::UNUSED;
+        if (!m_opcodeLookup.contains(opcode))
+        {
+            printf("Illegal opcode (%02x)\n", opcode);
+            return;
+        }
+
+        auto instruction = m_opcodeLookup[opcode];
+        m_currentCycles = instruction.cycles;
+        (this->*instruction.operation)(instruction.addrMode);
+
+        printf("CPU State:\n");
+        printf("    Program Counter: %04X, current instruction: %02X:%s:%d\n", m_pc, opcode, instruction.name.c_str(), instruction.cycles);
+        printf("    Stack Pointer: %02X\n", m_sp);
+        printf("    Accumulator: %02X\n", m_acc);
+        printf("    Register X: %02X\n", m_regX);
+        printf("    Register Y: %02X\n", m_regY);
+        fflush(stdout);
+        std::cout << "    Status Register: " << std::bitset<8>(m_procStatus) << std::endl;
+        std::cout << "                     NV1BDIZC\n" << std::endl;
+    }
+    m_currentCycles--;
+    m_totalCycles++;
+}
+
 uint8_t CPU::fetchByte()
 {
     uint8_t byte = memoryRead(m_pc++);
@@ -792,7 +826,7 @@ void CPU::stackPush(uint8_t byte)
 
 uint8_t CPU::stackPull()
 {
-    uint8_t byte = memoryRead(0x0100 | m_sp++);
+    uint8_t byte = memoryRead(0x0100 | ++m_sp);
     return byte;
 }
 
@@ -875,9 +909,7 @@ uint16_t CPU::IndirectIndexedMode()
 
 uint16_t CPU::RelativeMode()
 {
-    int8_t offset = memoryRead(m_pc);
-    m_pc += offset;
-    return m_pc;
+    return memoryRead(m_pc++);
 }
 
 void CPU::reset()
@@ -887,48 +919,29 @@ void CPU::reset()
     m_regY = 0;
     m_sp = 0xFF;
     m_procStatus = 0;
+    m_currentCycles = 7;
+    m_totalCycles = 0;
     m_pc = memoryReadAddress(0xFFFC);
 }
 
 void CPU::loadMemory(const std::vector<uint8_t> &program)
 {
-    size_t maxSize = 0xFFFF - 0x8000;
+    size_t maxSize = 0xFFFF - 0x0600;
 
     if (program.size() > maxSize)
     {
         std::cout << "Program memory is too large" << std::endl;
         return;
     }
-    std::copy(program.begin(), program.end(), m_mem + 0x8000);
-    memoryWrite(0xFFFC, 0x00);
-    memoryWrite(0xFFFD, 0x80);
+    std::copy(program.begin(), program.end(), m_mem + 0x0600);
 }
 
 void CPU::run()
 {
-    uint8_t opcode = 0;
     do
     {
-        opcode = fetchByte();
-
-        if (!m_opcodeLookup.contains(opcode))
-        {
-            printf("Unknown opcode (%02x)\n", opcode);
-            continue;
-        }
-
-        auto instruction = m_opcodeLookup[opcode];
-        m_currentCycles = instruction.cycles;
-        (this->*instruction.operation)(instruction.addrMode);
-
-        printf("CPU State:\n");
-        printf("    Program Counter: %04X, current instruction: %02X:%s:%d\n", m_pc, opcode, instruction.name.c_str(), instruction.cycles);
-        printf("    Stack Pointer: %02X\n", m_sp);
-        printf("    Accumulator: %02X\n", m_acc);
-        printf("    Register X: %02X\n", m_regX);
-        printf("    Register Y: %02X\n", m_regY);
-        printf("    Status Register: %02X\n\n", m_procStatus);
-    } while (opcode);
+        tick();
+    } while (true);
 }
 
 void CPU::setFlag(Flag flag, bool on)

@@ -54,6 +54,8 @@ class CPU
         uint8_t memoryRead(uint16_t addr);
         void memoryWrite(uint16_t addr, uint8_t data);
 
+        void tick();
+
     private:
         void setFlag(Flag flag, bool on);
         bool isFLagSet(Flag flag);
@@ -158,6 +160,7 @@ class CPU
         std::map<uint8_t, Instruction> m_opcodeLookup;
 
         uint8_t m_currentCycles;
+        uint64_t m_totalCycles;
 };
 
 #endif /* !CPU_H_ */
