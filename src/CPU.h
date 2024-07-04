@@ -56,6 +56,7 @@ class CPU
 
     private:
         void setFlag(Flag flag, bool on);
+        bool isFLagSet(Flag flag);
 
         uint16_t memoryReadAddress(uint16_t addr);
         uint8_t fetchByte();
@@ -89,13 +90,13 @@ class CPU
         // Instructions
         // void ADC();
         void AND(AddressingMode mode);
-        // void ASL();
-        // void BCC();
-        // void BCS();
-        // void BEQ();
-        // void BIT();
-        // void BMI();
-        // void BNE();
+        void ASL(AddressingMode mode);
+        void BCC(AddressingMode mode);
+        void BCS(AddressingMode mode);
+        void BEQ(AddressingMode mode);
+        void BIT(AddressingMode mode);
+        void BMI(AddressingMode mode);
+        void BNE(AddressingMode mode);
         // void BPL();
         void BRK(AddressingMode mode);
         // void BVC();

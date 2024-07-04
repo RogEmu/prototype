@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#define PAGE_CROSS(x, y) ((x & 0xFF00) != (y & 0xFF00))
+
 CPU::CPU() :
     m_pc(0),
     m_sp(0),
@@ -37,11 +39,8 @@ CPU::~CPU()
 
 void CPU::LDA(AddressingMode mode)
 {
-    uint16_t tmpPc = m_pc;
     uint16_t addr = addressFromMode(mode);
 
-    if ((tmpPc & 0xFF) != (addr & 0xFF))
-        m_currentCycles++;
     m_acc = memoryRead(addr);
     setFlag(Flag::ZERO, m_acc == 0);
     setFlag(Flag::NEGATIVE, (m_acc >> 7));
@@ -72,7 +71,104 @@ void CPU::INX(AddressingMode mode)
 void CPU::AND(AddressingMode mode)
 {
     uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
 
+    m_acc &= byte;
+    setFlag(Flag::ZERO, m_acc == 0);
+    setFlag(Flag::NEGATIVE, m_acc >> 7);
+}
+
+void CPU::ASL(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = 0;
+
+    if (mode == AddressingMode::Implicit)
+        byte = m_acc;
+    setFlag(Flag::CARRY, byte & 0x80);
+    setFlag(Flag::ZERO, byte == 0);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
+    byte <<= 1;
+    if (mode == AddressingMode::Implicit)
+        m_acc = byte;
+    else
+        memoryWrite(addr, byte);
+}
+
+void CPU::BCC(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (!isFLagSet(Flag::CARRY))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::BCS(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (isFLagSet(Flag::CARRY))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::BEQ(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (isFLagSet(Flag::ZERO))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::BIT(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+    uint8_t res = m_acc & byte;
+
+    setFlag(Flag::ZERO, res == 0);
+    setFlag(Flag::OVERFLOW, res & 0x40);
+    setFlag(Flag::NEGATIVE, res & 0x80);
+}
+
+void CPU::BMI(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (isFLagSet(Flag::NEGATIVE))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::BNE(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (!isFLagSet(Flag::ZERO))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
 }
 
 void CPU::BRK(AddressingMode mode)
@@ -162,6 +258,8 @@ uint16_t CPU::AbsoluteMode()
 uint16_t CPU::AbsoluteIndexedXMode()
 {
     uint16_t addr = memoryReadAddress(m_pc) + m_regX;
+    if ((m_pc & 0xFF00) != (addr & 0xFF00))
+        m_currentCycles++;
     m_pc += 2;
     return addr;
 }
@@ -169,6 +267,8 @@ uint16_t CPU::AbsoluteIndexedXMode()
 uint16_t CPU::AbsoluteIndexedYMode()
 {
     uint16_t addr = memoryReadAddress(m_pc) + m_regY;
+    if ((m_pc & 0xFF00) != (addr & 0xFF00))
+        m_currentCycles++;
     m_pc += 2;
     return addr;
 }
@@ -210,9 +310,13 @@ uint16_t CPU::IndexedIndirectMode()
 
 uint16_t CPU::IndirectIndexedMode()
 {
-    uint16_t addrPtr = memoryRead(m_pc++);
+    uint16_t addrPtr = memoryRead(m_pc);
     uint16_t lsb = memoryRead(addrPtr & 0xFF) + m_regY;
     uint16_t msb = memoryRead(addrPtr + 1) << 8;
+
+    if ((m_pc & 0xFF00) != (addrPtr & 0xFF00))
+        m_currentCycles++;
+    m_pc++;
     return msb | lsb;
 }
 
@@ -280,4 +384,9 @@ void CPU::setFlag(Flag flag, bool on)
         m_procStatus |= flag;
     else
         m_procStatus &= ~flag;
+}
+
+bool CPU::isFLagSet(Flag flag)
+{
+    return m_procStatus & flag;
 }

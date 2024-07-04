@@ -7,7 +7,7 @@
 
 #include "CPU.h"
 
-int main(int ac, char**av)
+int main()
 {
     CPU cpu;
     std::vector<uint8_t> memory = {0xa5, 0x10, 0x00};
