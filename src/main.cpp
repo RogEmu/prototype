@@ -10,9 +10,10 @@
 int main(int ac, char**av)
 {
     CPU cpu;
-    std::vector<uint8_t> memory = {0xa9, 0xc0, 0xaa, 0xe8, 0x00};
+    std::vector<uint8_t> memory = {0xa5, 0x10, 0x00};
 
     cpu.loadMemory(memory);
+    cpu.memoryWrite(0x10,0x55);
     cpu.reset();
     cpu.run();
     return 0;
