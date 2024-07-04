@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <map>
 
 enum Flag
 {
@@ -40,21 +41,6 @@ enum class AddressingMode
     IndirectIndexed
 };
 
-enum OpCode
-{
-    BRK,
-    LDA = 0xA9,
-    TAX = 0xAA,
-    INX
-};
-
-struct Instruction
-{
-    std::string name;
-    AddressingMode addrMode;
-    uint8_t cycles;
-};
-
 class CPU
 {
     public:
@@ -65,12 +51,13 @@ class CPU
         void run();
         void reset();
 
+        uint8_t memoryRead(uint16_t addr);
+        void memoryWrite(uint16_t addr, uint8_t data);
+
     private:
         void setFlag(Flag flag, bool on);
 
-        uint8_t memoryRead(uint16_t addr);
         uint16_t memoryReadAddress(uint16_t addr);
-        void memoryWrite(uint16_t addr, uint8_t data);
         uint8_t fetchByte();
 
         uint16_t addressFromMode(AddressingMode mode);
@@ -88,6 +75,16 @@ class CPU
         uint16_t ZeroPageYMode();
         uint16_t IndirectMode();
         uint16_t IndexedIndirectMode();
+        uint16_t IndirectIndexedMode();
+        uint16_t RelativeMode();
+
+        struct Instruction
+        {
+            std::string name;
+            AddressingMode addrMode;
+            void (CPU::*operation)(AddressingMode);
+            uint8_t cycles;
+        };
 
         // Instructions
         void ADC();
@@ -100,7 +97,7 @@ class CPU
         // void BMI();
         // void BNE();
         // void BPL();
-        void BRK();
+        void BRK(AddressingMode mode);
         // void BVC();
         // void BVS();
         // void CLC();
@@ -115,15 +112,15 @@ class CPU
         // void DEY();
         // void EOR();
         // void INC();
-        void INX();
+        void INX(AddressingMode mode);
         // void INY();
         // void JMP();
         // void JSR();
-        void LDA();
+        void LDA(AddressingMode mode);
         // void LDX();
         // void LDY();
         // void LSR();
-        void NOP();
+        void NOP(AddressingMode mode);
         // void ORA();
         // void PHA();
         // void PHP();
@@ -140,7 +137,7 @@ class CPU
         // void STA();
         // void STX();
         // void STY();
-        void TAX();
+        void TAX(AddressingMode mode);
         // void TAY();
         // void TSX();
         // void TXA();
@@ -156,6 +153,8 @@ class CPU
         uint8_t m_procStatus; // Processor Status
 
         uint8_t m_mem[0x10000]; // Memory
+
+        std::map<uint8_t, Instruction> m_opcodeLookup;
 };
 
 #endif /* !CPU_H_ */
