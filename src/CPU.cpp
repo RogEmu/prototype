@@ -27,6 +27,85 @@ CPU::CPU() :
     m_opcodeLookup[0x61] = (Instruction){"ADC", AddressingMode::IndexedIndirect, &CPU::ADC, 6};
     m_opcodeLookup[0x71] = (Instruction){"ADC", AddressingMode::IndirectIndexed, &CPU::ADC, 5};
 
+    m_opcodeLookup[0x29] = (Instruction){"AND", AddressingMode::Immediate, &CPU::AND, 2};
+    m_opcodeLookup[0x25] = (Instruction){"AND", AddressingMode::ZeroPage, &CPU::AND, 3};
+    m_opcodeLookup[0x35] = (Instruction){"AND", AddressingMode::ZeroPageX, &CPU::AND, 4};
+    m_opcodeLookup[0x2D] = (Instruction){"AND", AddressingMode::Absolute, &CPU::AND, 4};
+    m_opcodeLookup[0x23] = (Instruction){"AND", AddressingMode::AbsoluteX, &CPU::AND, 4};
+    m_opcodeLookup[0x39] = (Instruction){"AND", AddressingMode::AbsoluteY, &CPU::AND, 4};
+    m_opcodeLookup[0x21] = (Instruction){"AND", AddressingMode::IndexedIndirect, &CPU::AND, 6};
+    m_opcodeLookup[0x31] = (Instruction){"AND", AddressingMode::IndirectIndexed, &CPU::AND, 5};
+
+    m_opcodeLookup[0x0A] = (Instruction){"ASL", AddressingMode::Implicit, &CPU::ASL, 2};
+    m_opcodeLookup[0x06] = (Instruction){"ASL", AddressingMode::ZeroPage, &CPU::ASL, 5};
+    m_opcodeLookup[0x16] = (Instruction){"ASL", AddressingMode::ZeroPageX, &CPU::ASL, 6};
+    m_opcodeLookup[0x0E] = (Instruction){"ASL", AddressingMode::Absolute, &CPU::ASL, 6};
+    m_opcodeLookup[0x1E] = (Instruction){"ASL", AddressingMode::AbsoluteX, &CPU::ASL, 7};
+
+    m_opcodeLookup[0x90] = (Instruction){"BCC", AddressingMode::Relative, &CPU::BCC, 2};
+    m_opcodeLookup[0xB0] = (Instruction){"BCS", AddressingMode::Relative, &CPU::BCS, 2};
+    m_opcodeLookup[0xF0] = (Instruction){"BEQ", AddressingMode::Relative, &CPU::BCS, 2};
+    m_opcodeLookup[0x30] = (Instruction){"BMI", AddressingMode::Relative, &CPU::BCS, 2};
+    m_opcodeLookup[0xD0] = (Instruction){"BNE", AddressingMode::Relative, &CPU::BCS, 2};
+    m_opcodeLookup[0x10] = (Instruction){"BPL", AddressingMode::Relative, &CPU::BPL, 2};
+    m_opcodeLookup[0x50] = (Instruction){"BVC", AddressingMode::Relative, &CPU::BVC, 2};
+    m_opcodeLookup[0x70] = (Instruction){"BVS", AddressingMode::Relative, &CPU::BVS, 2};
+
+    m_opcodeLookup[0x24] = (Instruction){"BIT", AddressingMode::ZeroPage, &CPU::BIT, 3};
+    m_opcodeLookup[0x2C] = (Instruction){"BIT", AddressingMode::Absolute, &CPU::BIT, 4};
+
+    m_opcodeLookup[0x00] = (Instruction){"BRK", AddressingMode::Implicit, &CPU::BRK, 7};
+
+    m_opcodeLookup[0x18] = (Instruction){"CLC", AddressingMode::Implicit, &CPU::CLC, 2};
+    m_opcodeLookup[0xD8] = (Instruction){"CLD", AddressingMode::Implicit, &CPU::CLD, 2};
+    m_opcodeLookup[0x58] = (Instruction){"CLI", AddressingMode::Implicit, &CPU::CLI, 2};
+    m_opcodeLookup[0xB8] = (Instruction){"CLV", AddressingMode::Implicit, &CPU::CLV, 2};
+
+    m_opcodeLookup[0xC9] = (Instruction){"CMP", AddressingMode::Immediate, &CPU::CMP, 2};
+    m_opcodeLookup[0xC5] = (Instruction){"CMP", AddressingMode::ZeroPage, &CPU::CMP, 3};
+    m_opcodeLookup[0xD5] = (Instruction){"CMP", AddressingMode::ZeroPageX, &CPU::CMP, 4};
+    m_opcodeLookup[0xCD] = (Instruction){"CMP", AddressingMode::Absolute, &CPU::CMP, 4};
+    m_opcodeLookup[0xDD] = (Instruction){"CMP", AddressingMode::AbsoluteX, &CPU::CMP, 4};
+    m_opcodeLookup[0xD9] = (Instruction){"CMP", AddressingMode::AbsoluteY, &CPU::CMP, 4};
+    m_opcodeLookup[0xC1] = (Instruction){"CMP", AddressingMode::IndexedIndirect, &CPU::CMP, 6};
+    m_opcodeLookup[0xD1] = (Instruction){"CMP", AddressingMode::IndirectIndexed, &CPU::CMP, 5};
+
+    m_opcodeLookup[0xE0] = (Instruction){"CPX", AddressingMode::Immediate, &CPU::CPX, 2};
+    m_opcodeLookup[0xE4] = (Instruction){"CPX", AddressingMode::ZeroPage, &CPU::CPX, 3};
+    m_opcodeLookup[0xEC] = (Instruction){"CPX", AddressingMode::Absolute, &CPU::CPX, 4};
+
+    m_opcodeLookup[0xC0] = (Instruction){"CPY", AddressingMode::Immediate, &CPU::CPY, 2};
+    m_opcodeLookup[0xC4] = (Instruction){"CPY", AddressingMode::ZeroPage, &CPU::CPY, 3};
+    m_opcodeLookup[0xCC] = (Instruction){"CPY", AddressingMode::Absolute, &CPU::CPX, 4};
+
+    m_opcodeLookup[0xC6] = (Instruction){"DEC", AddressingMode::ZeroPage, &CPU::DEC, 5};
+    m_opcodeLookup[0xD6] = (Instruction){"DEC", AddressingMode::ZeroPageX, &CPU::DEC, 6};
+    m_opcodeLookup[0xCE] = (Instruction){"DEC", AddressingMode::Absolute, &CPU::DEC, 6};
+    m_opcodeLookup[0xDE] = (Instruction){"DEC", AddressingMode::AbsoluteX, &CPU::DEC, 7};
+
+    m_opcodeLookup[0xCA] = (Instruction){"DEX", AddressingMode::Implicit, &CPU::DEX, 2};
+    m_opcodeLookup[0x88] = (Instruction){"DEY", AddressingMode::Implicit, &CPU::DEY, 2};
+
+    m_opcodeLookup[0x49] = (Instruction){"EOR", AddressingMode::Immediate, &CPU::EOR, 2};
+    m_opcodeLookup[0x45] = (Instruction){"EOR", AddressingMode::ZeroPage, &CPU::EOR, 3};
+    m_opcodeLookup[0x55] = (Instruction){"EOR", AddressingMode::ZeroPageX, &CPU::EOR, 4};
+    m_opcodeLookup[0x4D] = (Instruction){"EOR", AddressingMode::Absolute, &CPU::EOR, 4};
+    m_opcodeLookup[0x5D] = (Instruction){"EOR", AddressingMode::AbsoluteX, &CPU::EOR, 4};
+    m_opcodeLookup[0x59] = (Instruction){"EOR", AddressingMode::AbsoluteX, &CPU::EOR, 4};
+    m_opcodeLookup[0x41] = (Instruction){"EOR", AddressingMode::IndexedIndirect, &CPU::EOR, 6};
+    m_opcodeLookup[0x51] = (Instruction){"EOR", AddressingMode::IndirectIndexed, &CPU::EOR, 5};
+
+    m_opcodeLookup[0xE6] = (Instruction){"INC", AddressingMode::ZeroPage, &CPU::INC, 5};
+    m_opcodeLookup[0xF6] = (Instruction){"INC", AddressingMode::ZeroPageX, &CPU::INC, 6};
+    m_opcodeLookup[0xEE] = (Instruction){"INC", AddressingMode::Absolute, &CPU::INC, 6};
+    m_opcodeLookup[0xFE] = (Instruction){"INC", AddressingMode::AbsoluteX, &CPU::INC, 7};
+
+    m_opcodeLookup[0xE8] = (Instruction){"INX", AddressingMode::Implicit, &CPU::INX, 2};
+    m_opcodeLookup[0xC8] = (Instruction){"INY", AddressingMode::Implicit, &CPU::INX, 2};
+
+    m_opcodeLookup[0x4C] = (Instruction){"JMP", AddressingMode::Absolute, &CPU::JMP, 3};
+    m_opcodeLookup[0x6C] = (Instruction){"JMP", AddressingMode::Indirect, &CPU::JMP, 5};
+
     m_opcodeLookup[0xA9] = (Instruction){"LDA", AddressingMode::Immediate, &CPU::LDA, 2};
     m_opcodeLookup[0xA5] = (Instruction){"LDA", AddressingMode::ZeroPage, &CPU::LDA, 3};
     m_opcodeLookup[0xB5] = (Instruction){"LDA", AddressingMode::ZeroPageX, &CPU::LDA, 4};
@@ -37,7 +116,6 @@ CPU::CPU() :
     m_opcodeLookup[0xB1] = (Instruction){"LDA", AddressingMode::IndirectIndexed, &CPU::LDA, 5};
 
     m_opcodeLookup[0xEA] = (Instruction){"NOP", AddressingMode::Implicit, &CPU::NOP, 2};
-    m_opcodeLookup[0xE8] = (Instruction){"INX", AddressingMode::Implicit, &CPU::INX, 2};
     m_opcodeLookup[0x00] = (Instruction){"BRK", AddressingMode::Implicit, &CPU::BRK, 7};
 
     m_opcodeLookup[0x38] = (Instruction){"SEC", AddressingMode::Implicit, &CPU::SEC, 2};
@@ -219,10 +297,167 @@ void CPU::BNE(AddressingMode mode)
     }
 }
 
+void CPU::BPL(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (!isFLagSet(Flag::NEGATIVE))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
 void CPU::BRK(AddressingMode mode)
 {
     (void)mode;
     setFlag(Flag::B, true);
+}
+
+void CPU::BVC(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (!isFLagSet(Flag::OVERFLOW))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::BVS(AddressingMode mode)
+{
+    int8_t offset = addressFromMode(mode) & 0xFF;
+
+    if (isFLagSet(Flag::OVERFLOW))
+    {
+        m_pc += offset;
+        m_currentCycles++;
+        if (PAGE_CROSS(m_pc + offset, m_pc))
+            m_currentCycles++;
+    }
+}
+
+void CPU::CLC(AddressingMode mode)
+{
+    (void)mode;
+    setFlag(Flag::CARRY, 0);
+}
+
+void CPU::CLD(AddressingMode mode)
+{
+    (void)mode;
+    setFlag(Flag::DECMODE_DISABLE, 0);
+}
+
+void CPU::CLI(AddressingMode mode)
+{
+    (void)mode;
+    setFlag(Flag::INT_DISABLE, 0);
+}
+
+void CPU::CLV(AddressingMode mode)
+{
+    (void)mode;
+    setFlag(Flag::OVERFLOW, 0);
+}
+
+void CPU::CMP(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+
+    uint8_t res = m_acc - byte;
+    setFlag(Flag::CARRY, res >= byte);
+    setFlag(Flag::ZERO, m_acc == byte);
+    setFlag(Flag::NEGATIVE, res & 0x80);
+}
+
+void CPU::CPX(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+
+    uint8_t res = m_regX - byte;
+    setFlag(Flag::CARRY, res >= byte);
+    setFlag(Flag::ZERO, m_acc == byte);
+    setFlag(Flag::NEGATIVE, res & 0x80);
+}
+
+void CPU::CPY(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+
+    uint8_t res = m_regY - byte;
+    setFlag(Flag::CARRY, res >= byte);
+    setFlag(Flag::ZERO, m_acc == byte);
+    setFlag(Flag::NEGATIVE, res & 0x80);
+}
+
+void CPU::DEC(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+
+    byte--;
+    setFlag(Flag::ZERO, byte == 0);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
+    memoryWrite(addr, byte);
+}
+
+void CPU::DEX(AddressingMode mode)
+{
+    (void)mode;
+    m_regX--;
+    setFlag(Flag::ZERO, m_regX == 0);
+    setFlag(Flag::NEGATIVE, m_regX & 0x80);
+}
+
+void CPU::DEY(AddressingMode mode)
+{
+    (void)mode;
+    m_regY--;
+    setFlag(Flag::ZERO, m_regY == 0);
+    setFlag(Flag::NEGATIVE, m_regY & 0x80);
+}
+
+void CPU::EOR(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+    m_acc ^= byte;
+
+    setFlag(Flag::ZERO, m_acc == 0);
+    setFlag(Flag::NEGATIVE, m_acc & 0x80);
+}
+
+void CPU::INC(AddressingMode mode)
+{
+    uint16_t addr = addressFromMode(mode);
+    uint8_t byte = memoryRead(addr);
+
+    byte++;
+    setFlag(Flag::ZERO, byte == 0);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
+    memoryWrite(addr, byte);
+}
+
+void CPU::INY(AddressingMode mode)
+{
+    (void)mode;
+    m_regY++;
+    setFlag(Flag::ZERO, m_regY == 0);
+    setFlag(Flag::NEGATIVE, (m_regY >> 7));
+}
+
+void CPU::JMP(AddressingMode mode)
+{
+    m_pc = addressFromMode(mode);
 }
 
 void CPU::SBC(AddressingMode mode)
