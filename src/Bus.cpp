@@ -33,7 +33,7 @@ void Bus::loadFromFile(const std::string &filename)
         std::cout << "Couldn't open file: " << filename << std::endl;
         return;
     }
-    fileStream.read((char *)m_ram, 0x10);
+    fileStream.read((char *)m_ram + 0xC00, 0x10);
     fileStream.read((char *)m_ram + 0xC000, 0x4000);
 }
 

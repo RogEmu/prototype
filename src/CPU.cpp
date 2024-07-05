@@ -299,8 +299,8 @@ void CPU::BIT(AddressingMode mode)
     uint8_t res = m_acc & byte;
 
     setFlag(Flag::ZERO, res == 0);
-    setFlag(Flag::OVERFLOW, res & 0x40);
-    setFlag(Flag::NEGATIVE, res & 0x80);
+    setFlag(Flag::OVERFLOW, byte & 0x40);
+    setFlag(Flag::NEGATIVE, byte & 0x80);
 }
 
 void CPU::BMI(AddressingMode mode)
