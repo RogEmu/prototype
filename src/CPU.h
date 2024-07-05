@@ -153,7 +153,8 @@ class CPU
         void TYA(AddressingMode mode);
 
         void logInstruction(uint8_t opcode, AddressingMode mode);
-        void logDissassembly(uint8_t opcode, AddressingMode mode);
+        void logDisassembly(uint8_t opcode, AddressingMode mode);
+        void disZeroPage(AddressingMode mode);
     private:
         uint16_t m_pc; // Program Counter
         uint8_t m_sp; // Stack Pointer
@@ -161,6 +162,8 @@ class CPU
         uint8_t m_regX; // Register X
         uint8_t m_regY; // Register Y
         uint8_t m_procStatus; // Processor Status
+
+        uint16_t adrFromMode;
 
         std::map<uint8_t, Instruction> m_opcodeLookup;
 

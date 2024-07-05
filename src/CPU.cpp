@@ -9,18 +9,20 @@
 #include <iostream>
 #include <bitset>
 #include <iomanip>
+#include <sstream>
 
 #include "Bus.h"
 
 #define PAGE_CROSS(x, y) (((x) & 0xFF00) != ((y) & 0xFF00))
 
-CPU::CPU() :
+CPU::CPU():
     m_pc(0),
     m_sp(0),
     m_acc(0),
     m_regX(0),
     m_regY(0),
     m_procStatus(Flag::UNUSED),
+    adrFromMode(0),
     m_currentCycles(0),
     m_totalCycles(0)
 {
@@ -523,7 +525,7 @@ void CPU::LDX(AddressingMode mode)
 
     m_regX = byte;
     setFlag(Flag::ZERO, m_regX == 0);
-    setFlag(Flag::NEGATIVE, m_regX >> 7);
+    setFlag(Flag::NEGATIVE, m_regX & 0x80);
 }
 
 void CPU::LDY(AddressingMode mode)
@@ -779,7 +781,7 @@ void CPU::logInstruction(uint8_t opcode, AddressingMode mode)
     }
 }
 
-void CPU::logDissassembly(uint8_t opcode, AddressingMode mode)
+void CPU::logDisassembly(uint8_t opcode, AddressingMode mode)
 {
     switch (mode)
     {
@@ -795,12 +797,12 @@ void CPU::logDissassembly(uint8_t opcode, AddressingMode mode)
             printf(" $%04X                       ", (memoryRead(m_pc) | ((uint16_t)memoryRead(m_pc + 1)) << 8));
             break;
         case AddressingMode::Relative:
-            printf(" $%04X                       ", memoryReadAddress(m_pc + (int8_t)memoryRead(m_pc) - 1));
+            printf(" $%04X                       ", m_pc + 1 + (int8_t)memoryRead(m_pc));
             break;
         case AddressingMode::ZeroPage:
         case AddressingMode::ZeroPageX:
         case AddressingMode::ZeroPageY:
-            printf(" $%02X = %02X                    ", memoryRead(m_pc), memoryRead(memoryRead(m_pc)));
+            printf(" $%02X = %02X                    ", memoryRead(m_pc), memoryRead(adrFromMode));
             break;
         case AddressingMode::IndirectIndexed:
         case AddressingMode::IndexedIndirect:
@@ -809,6 +811,17 @@ void CPU::logDissassembly(uint8_t opcode, AddressingMode mode)
         default:
             break;
     }
+}
+
+std::string formatRegisters(uint8_t m_acc, uint8_t m_regX, uint8_t m_regY, uint8_t m_procStatus, uint8_t m_sp)
+{
+    std::ostringstream oss;
+    oss << "A:" << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << static_cast<int>(m_acc) << " "
+        << "X:" << std::setw(2) << static_cast<int>(m_regX) << " "
+        << "Y:" << std::setw(2) << static_cast<int>(m_regY) << " "
+        << "P:" << std::setw(2) << static_cast<int>(m_procStatus) << " "
+        << "SP:" << std::setw(2) << static_cast<int>(m_sp) << "\n";
+    return oss.str();
 }
 
 void CPU::tick()
@@ -828,8 +841,9 @@ void CPU::tick()
         printf("%04X  ", m_pc - 1);
         logInstruction(opcode, instruction.addrMode);
         printf("%s", instruction.name.c_str());
-        logDissassembly(opcode, instruction.addrMode);
-        printf("A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", m_acc, m_regX, m_regY, m_procStatus, m_sp);
+        logDisassembly(opcode, instruction.addrMode);
+        std::string registerString = formatRegisters(m_acc, m_regX, m_regY, m_procStatus, m_sp);
+        printf("%s", registerString.c_str());
         (this->*instruction.operation)(instruction.addrMode);
     }
     m_currentCycles--;
@@ -922,6 +936,7 @@ uint16_t CPU::AbsoluteIndexedYMode()
 
 uint16_t CPU::ZeroPageMode()
 {
+    adrFromMode = memoryRead(m_pc);
     uint16_t addr = memoryRead(m_pc++);
     addr &= 0x00FF;
     return addr;
@@ -929,6 +944,7 @@ uint16_t CPU::ZeroPageMode()
 
 uint16_t CPU::ZeroPageXMode()
 {
+    adrFromMode = memoryRead(m_pc);
     uint16_t addr = memoryRead(m_pc++) + m_regX;
     addr &= 0x00FF;
     return addr;
@@ -936,6 +952,7 @@ uint16_t CPU::ZeroPageXMode()
 
 uint16_t CPU::ZeroPageYMode()
 {
+    adrFromMode = memoryRead(m_pc);
     uint16_t addr = memoryRead(m_pc++) + m_regY;
     addr &= 0x00FF;
     return addr;

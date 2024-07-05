@@ -6,6 +6,7 @@
 
 Bus::Bus()
 {
+    std::fill(m_ram, m_ram + 0x10000, 0);
 }
 
 Bus::~Bus()
@@ -14,12 +15,12 @@ Bus::~Bus()
 
 void Bus::cpuWrite(uint16_t addr, uint8_t byte)
 {
-    m_ram[addr] = byte;
+        m_ram[addr] = byte;
 }
 
 uint8_t Bus::cpuRead(uint16_t addr)
 {
-    return m_ram[addr];
+        return m_ram[addr];
 }
 
 void Bus::loadFromFile(const std::string &filename)
