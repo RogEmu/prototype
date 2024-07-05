@@ -154,7 +154,6 @@ class CPU
 
         void logInstruction(uint8_t opcode, AddressingMode mode);
         void logDisassembly(uint8_t opcode, AddressingMode mode);
-        void disZeroPage(AddressingMode mode);
     private:
         uint16_t m_pc; // Program Counter
         uint8_t m_sp; // Stack Pointer
