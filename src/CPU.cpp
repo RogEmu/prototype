@@ -578,7 +578,7 @@ void CPU::PHA(AddressingMode mode)
 void CPU::PHP(AddressingMode mode)
 {
     (void)mode;
-    stackPush(m_procStatus);
+    stackPush(m_procStatus | Flag::B);
 }
 
 void CPU::PLA(AddressingMode mode)
@@ -592,7 +592,7 @@ void CPU::PLA(AddressingMode mode)
 void CPU::PLP(AddressingMode mode)
 {
     (void)mode;
-    m_procStatus = stackPull();
+    m_procStatus = stackPull() & 0xEF | 0x20;
 }
 
 void CPU::ROL(AddressingMode mode)
@@ -781,7 +781,7 @@ void CPU::logInstruction(uint8_t opcode, AddressingMode mode)
     }
 }
 
-void CPU::logDisassembly(uint8_t opcode, AddressingMode mode)
+void CPU::logDisassembly(AddressingMode mode)
 {
     switch (mode)
     {
@@ -841,7 +841,7 @@ void CPU::tick()
         printf("%04X  ", m_pc - 1);
         logInstruction(opcode, instruction.addrMode);
         printf("%s", instruction.name.c_str());
-        logDisassembly(opcode, instruction.addrMode);
+        logDisassembly(instruction.addrMode);
         std::string registerString = formatRegisters(m_acc, m_regX, m_regY, m_procStatus, m_sp);
         printf("%s", registerString.c_str());
         (this->*instruction.operation)(instruction.addrMode);
