@@ -880,9 +880,9 @@ uint16_t CPU::addressFromMode(AddressingMode mode)
     case AddressingMode::Indirect:
         return IndirectMode();
     case AddressingMode::IndirectIndexed:
-        return IndirectIndexedMode();
+        return IndirectYMode();
     case AddressingMode::IndexedIndirect:
-        return IndexedIndirectMode();
+        return IndirectXMode();
     case AddressingMode::ZeroPageX:
         return ZeroPageXMode();
     case AddressingMode::ZeroPageY:
@@ -965,14 +965,14 @@ uint16_t CPU::IndirectMode()
     return memoryReadAddress(indirectAddr);
 }
 
-uint16_t CPU::IndexedIndirectMode()
+uint16_t CPU::IndirectXMode()
 {
-    uint16_t addressLSB = (memoryRead(m_pc++) + m_regX) & 0xFF;
-    uint16_t addressMSB = (addressLSB + 1) << 8;
-    return memoryReadAddress(addressMSB | addressLSB);
+    uint16_t sumNC = (memoryRead(m_pc) + m_regX) & 0xFF;
+    m_pc++;
+    return memoryRead(sumNC) | ((memoryRead((sumNC + 1) & 0xFF)) << 8);
 }
 
-uint16_t CPU::IndirectIndexedMode()
+uint16_t CPU::IndirectYMode()
 {
     uint16_t addrPtr = memoryRead(m_pc);
     uint16_t lsb = memoryRead(addrPtr & 0xFF) + m_regY;

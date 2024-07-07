@@ -82,8 +82,8 @@ class CPU
         uint16_t ZeroPageXMode();
         uint16_t ZeroPageYMode();
         uint16_t IndirectMode();
-        uint16_t IndexedIndirectMode();
-        uint16_t IndirectIndexedMode();
+        uint16_t IndirectXMode();
+        uint16_t IndirectYMode();
         uint16_t RelativeMode();
 
         struct Instruction
