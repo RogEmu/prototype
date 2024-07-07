@@ -3321,7 +3321,7 @@ DB71  A9 7E     LDA #$7E                        A:87 X:07 Y:00 P:65 SP:FB
 DB73  8D 00 02  STA $0200                       A:7E X:07 Y:00 P:65 SP:FB
 DB76  A9 DB     LDA #$DB                        A:7E X:07 Y:00 P:65 SP:FB
 DB78  8D 01 02  STA $0201                       A:DB X:07 Y:00 P:E5 SP:FB
-DB7B  6C JMPA:DB X:07 Y:00 P:E5 SP:FB
+DB7B  6C 00 02  JMP ($0200)                     A:DB X:07 Y:00 P:E5 SP:FB
 DB7E  A9 00     LDA #$00                        A:DB X:07 Y:00 P:E5 SP:FB
 DB80  8D FF 02  STA $02FF                       A:00 X:07 Y:00 P:67 SP:FB
 DB83  A9 01     LDA #$01                        A:00 X:07 Y:00 P:67 SP:FB
@@ -3341,7 +3341,7 @@ DBA3  8D 01 03  STA $0301                       A:AA X:07 Y:00 P:E5 SP:FB
 DBA6  A9 60     LDA #$60                        A:AA X:07 Y:00 P:E5 SP:FB
 DBA8  8D 02 03  STA $0302                       A:60 X:07 Y:00 P:65 SP:FB
 DBAB  20 B5 DB  JSR $DBB5                       A:60 X:07 Y:00 P:65 SP:FB
-DBB5  6C JMPA:60 X:07 Y:00 P:65 SP:F9
+DBB5  6C FF 02  JMP ($02FF)                     A:60 X:07 Y:00 P:65 SP:F9
 A900  00        BRK                             A:60 X:07 Y:00 P:65 SP:F9
 A901  00        BRK                             A:60 X:07 Y:00 P:75 SP:F9
 A902  00        BRK                             A:60 X:07 Y:00 P:75 SP:F9

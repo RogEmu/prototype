@@ -765,6 +765,7 @@ void CPU::logInstruction(uint8_t opcode, AddressingMode mode)
         case AddressingMode::Absolute:
         case AddressingMode::AbsoluteX:
         case AddressingMode::AbsoluteY:
+        case AddressingMode::Indirect:
             printf("%02X %02X  ", memoryRead(m_pc), memoryRead(m_pc + 1));
             break;
         case AddressingMode::Immediate:
@@ -790,6 +791,9 @@ void CPU::logDisassembly(AddressingMode mode)
             break;
         case AddressingMode::Immediate:
             printf(" #$%02X                        ", memoryRead(m_pc));
+            break;
+        case AddressingMode::Indirect:
+            printf(" ($%04X)                     ", memoryReadAddress(m_pc));
             break;
         case AddressingMode::Absolute:
         case AddressingMode::AbsoluteX:
